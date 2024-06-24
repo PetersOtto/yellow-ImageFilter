@@ -10,7 +10,7 @@ This extension contains two filters: sharpen and contrast. If you want to use ot
 ## How to use
 1) You select the filter as a class with the identifier `imfi-`. For example: `[image 01-vintage-rennrad.jpg "alt text" "imfi-contrast"]`.
 2) A filter can be set for all images in `system/extensions/yellow-system.ini`. If a filter is set for all images, the `imfi-original` class can be used to switch back to the original image.
-3) If you want to switch off the title tag for all images, change in `system/extensions/yellow-system.ini` the setting of ImageFilterUseTitleTag from 1 to 0.
+3) If you want to switch off the title tag for all images, change in `system/extensions/yellow-system.ini` the setting of `ImageFilterUseTitleTag` from `1` to `0`.
 4) If you want to use other filters or create your own filters, it is best to install the ImageFilterCollection extension.
 
 ## Examples
