@@ -1,0 +1,4 @@
+.gitattributes export-ignore
+LICENSE.md export-ignore
+README*.md export-ignore
+01-vintage-rennrad*.jpg export-ignore
