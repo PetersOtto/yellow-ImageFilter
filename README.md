@@ -17,8 +17,8 @@ This extension contains two filters: sharpen and contrast. If you want to use ot
 
 | Original | Filter | Filtername |
 | --- | --- | --- |
-| <img src="01-vintage-rennrad.jpg?raw=true" alt="original image"> | <img src="01-vintage-rennrad-sharpen.jpg?raw=true" alt="sharpen filter">  | sharpen filter | 
-| <img src="01-vintage-rennrad.jpg?raw=true" alt="original image"> | <img src="01-vintage-rennrad-contrast.jpg?raw=true" alt="contrast filter">  | contrast filter |
+| <img src="01-vintage-rennrad.jpg" alt="original image"> | <img src="01-vintage-rennrad-sharpen.jpg" alt="sharpen filter">  | sharpen filter | 
+| <img src="01-vintage-rennrad.jpg" alt="original image"> | <img src="01-vintage-rennrad-contrast.jpg" alt="contrast filter">  | contrast filter |
  
 ## Developer
 PetersOtto. [Get help](https://datenstrom.se/yellow/help/)
