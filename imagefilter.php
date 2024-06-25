@@ -127,7 +127,11 @@ class YellowImagefilter
             if ($this->yellow->system->get("imageFilterUseTitleTag") == "1"){
                 $output .= " title=\"$altMatches\"";
             }
-            $output .= " class=\"$classMatches\"";
+            if ($classMatches == ""){
+                $output .= "";
+            }else{
+                $output .= " class=\"$classMatches\"";
+            }
             $output .= ' >';
             return $output;
             
