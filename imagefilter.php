@@ -4,7 +4,7 @@
 
 class YellowImagefilter
 {
-    const VERSION = '0.9.2';
+    const VERSION = '0.9.3';
 
     public $yellow;  // access to API
 
@@ -127,12 +127,10 @@ class YellowImagefilter
             if ($this->yellow->system->get("imageFilterUseTitleTag") == "1"){
                 $output .= " title=\"$altMatches\"";
             }
-            if ($classMatches == ""){
-                $output .= "";
-            }else{
+            if ($classMatches != ""){
                 $output .= " class=\"$classMatches\"";
             }
-            $output .= ' >';
+            $output .= '>';
             return $output;
             
         };
