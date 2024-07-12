@@ -4,7 +4,7 @@
 
 class YellowImagefilter
 {
-    const VERSION = '0.9.3';
+    const VERSION = '0.9.4';
 
     public $yellow;  // access to API
 
@@ -20,10 +20,13 @@ class YellowImagefilter
         $output = null;
         $callback = function ($matches) {
 
+            // Default Filter aufbereiten
+            // $defaultFilter = $this->yellow->system->get("defaultImfi");
             $defaultFilter = strtolower($this->yellow->system->get("imageFilterDefaultImfi"));
             $defaultFilter = explode('-', $defaultFilter);
             $defaultFilter = preg_replace('/\s+/', '', $defaultFilter[1]);
 
+            // img-Tag in Teile zerlegt, um daraus den Tag nachher neu aufzubauen.
             // Split »img-tag« and create the new one 
             preg_match('/<img src="(.*?)"/i', $matches[0], $srcMatches);
             preg_match('/width="(.*?)"/i', $matches[0], $widthMatches);
@@ -32,6 +35,8 @@ class YellowImagefilter
             preg_match('/class="(.*?)"/i', $matches[0], $classMatches);
             preg_match('/imfi-(.*?)\W/', $matches[0], $choosedFilter); 
             
+            // Problem wenn Array nicht vorhanden.
+            // Mache aus leerem Array eine leere Variable
             if(empty($widthMatches)){
                 $widthMatches = "";
             }else{
@@ -56,6 +61,9 @@ class YellowImagefilter
                 $classMatches = $classMatches[1];
             }
 
+            // Wenn Array leer ist, setze leeren String.
+            // Ändere Filternamen zu Kleinbuchstaben.
+            // Leerzeichen löschen.
             if (!empty($choosedFilter)){
                 $choosedFilter = strtolower($choosedFilter[1]);
                 $choosedFilter = preg_replace('/\s+/', '', $choosedFilter);
@@ -70,20 +78,24 @@ class YellowImagefilter
             }
 
             // Original Link and Filename
-            $srcOriginal = $srcMatches[1]; 
-            $srcOriginalParts = explode('/', $srcMatches[1]); 
-            $filenameOriginal = end($srcOriginalParts); 
-            $filnameOriginalParts = explode('.', $filenameOriginal); 
-            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal;
-            $type = $filnameOriginalParts[1]; 
+            $srcOriginal = $srcMatches[1]; // Link auf Original Source mit Dateinamen und Endung ermittelt
+            $srcOriginalParts = explode('/', $srcMatches[1]); // Original Source Pfad wird aufgeteilt 
+            $filenameOriginal = end($srcOriginalParts); // Original Dateiname mit Endung ermittelt
+            $filnameOriginalParts = explode('.', $filenameOriginal); // Original Dateiname wird in Name und Endung aufgeteilt
+            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal; // Interne Link zum Original Source (ohne »coreServerBase«) wird erstellt
+            $type = $filnameOriginalParts[1]; // Dateiendung wier ermittelt
 
             // New Link and Filename
-            $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $type; 
-            $pathNew = $this->yellow->system->get('coreServerBase') . '/' . $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; 
-            $srcNew = $pathNew . $filenameNew; 
-            $pathNewInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; 
-            $srcNewInside = $pathNewInside . $filenameNew; 
+            $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $type; // Neuer Dateiname mit Endung wird erstellt
+            $pathNew = $this->yellow->system->get('coreServerBase') . '/' . $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; // Link zum Filter-Ordner ohne Dateinamen
+            $srcNew = $pathNew . $filenameNew; // Neuer Link mit Dateinamen und Endung
+            $pathNewInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; // Neuer Interner Pfad
+            $srcNewInside = $pathNewInside . $filenameNew; // Neuer Interner Link zur Source mit Dateinamen und Endung erstellen
 
+            // Wenn ein Filter angegeben wurde, wird in dieser Datei und in »ImageFilterCollection« kontrolliert, ob die Funktion vorhanden ist.  
+            // Wenn noch kein Ordner existiert, dann wird eine neuer Ordner und das neue Bild angelegt.
+            // Wenn nicht, bleibt alles beim alten. 
+        
             // Generate Output
             if (!empty($choosedFilter)) {
                 $filterAvailableInternal = null;
@@ -134,6 +146,7 @@ class YellowImagefilter
             return $output;
             
         };
+        // Es wird nach »"/<img src=\"(.*?)\"/i"« in »$text« gesucht und durch »$output« ($callback) ersetzt!
         $output = preg_replace_callback('/<img(.*?)>/i', $callback, $text);  
         return $output;
     }
@@ -162,10 +175,15 @@ class YellowImagefilter
     public function loadImage($fileName, $type) {
         $image = false;
         switch ($type) {
-            case "gif":  $image = @imagecreatefromgif($fileName); break;
+            case "gif": $image = @imagecreatefromgif($fileName); break;
             case "jpeg": $image = @imagecreatefromjpeg($fileName); break;
             case "jpg": $image = @imagecreatefromjpeg($fileName); break;
-            case "png": $image = @imagecreatefrompng($fileName); break;
+            case "png": $image = @imagecreatefrompng($fileName); 
+                        $background = imagecolorallocate($image , 0, 0, 0);
+                        imagecolortransparent($image, $background);
+                        imagealphablending($image, false);
+                        imagesavealpha($image, true);
+                        break;
         }
         return $image;
     }
@@ -174,7 +192,7 @@ class YellowImagefilter
     public function saveImage($image, $fileName, $type) {
         $ok = false;
         switch ($type) {
-            case "gif":  $image = @imagecreatefromgif($fileName); break;
+            case "gif": $ok = @imagegif($image, $fileName); break;
             case "jpeg": $ok = @imagejpeg($image, $fileName); break;
             case "jpg": $ok = @imagejpeg($image, $fileName); break;
             case "png": $ok = @imagepng($image, $fileName); break;
