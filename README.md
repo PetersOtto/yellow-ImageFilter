@@ -18,6 +18,20 @@ This extension contains two filters: sharpen and contrast. If you want to use ot
 8) If webp support is enabled and `imfi-original` is selected as the default filter, the webp version of the image will be used. If `imfi-original` is used as css class, the original version of the image is used.
 9) If you want to use other filters or create your own filters, it is best to install the ImageFilterCollection extension.
 
+## Troubleshooting
+If the webp-file is displayed as plain text, this is probably due to the settings of the used web-server.
+
+Add the following lines to your `.htaccess`:
+
+```
+<IfModule mod_mime.c>
+  # Media files
+    AddType image/webp                                  webp
+</IfModule>
+```
+
+I found this solution here:
+https://forum.getkirby.com/t/media-webp-files-shown-as-plain-text/30315/7
 
 ## Examples
 
