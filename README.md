@@ -14,7 +14,7 @@ This extension contains two filters: sharpen and contrast. If you want to use ot
 4) If you want to switch off the title tag for all images, change in `system/extensions/yellow-system.ini` the setting of `ImageFilterUseTitleTag` from `1` to `0`.
 5) If you want to switch off the webp support, change in `system/extensions/yellow-system.ini` the setting of `imageFilterUseWebp` from `1` to `0`.
 6) With `imageFilterImageWebpQuality` and `imageFilterImageJpegQuality` in `system/extensions/yellow-system.ini` you can influence the quality of the images. Remember, the images are already compressed by the image extension when they are uploaded.
-7) `.jpg`, `.jpeg`, `.png` and `.webp` formats are supported. Gifs are not supported.
+7) `.jpg`, `.jpeg` and `.png` formats are supported. Gifs are not supported.
 8) If webp support is enabled and `imfi-original` is selected as the default filter, the webp version of the image will be used. If `imfi-original` is used as css class, the original version of the image is used.
 9) If you want to use other filters or create your own filters, it is best to install the ImageFilterCollection extension.
 
