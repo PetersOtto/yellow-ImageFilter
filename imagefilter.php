@@ -4,14 +4,17 @@
 
 class YellowImagefilter
 {
-    const VERSION = '0.9.4';
+    const VERSION = '0.9.5';
 
     public $yellow;  // access to API
 
     // Handle initialisation
     public function onLoad($yellow){
         $this->yellow = $yellow;
-        $this->yellow->system->setDefault("imageFilterUseTitleTag", "1");
+        $this->yellow->system->setDefault("imageFilterUseTitleTag", "0");
+        $this->yellow->system->setDefault("imageFilterUseWebp", "1"); 
+        $this->yellow->system->setDefault("imageFilterImageWebpQuality", "60"); 
+        $this->yellow->system->setDefault("imageFilterImageJpegQuality", "80"); 
         $this->yellow->system->setDefault("imageFilterDefaultImfi", "imfi-original");
     }
 
@@ -20,13 +23,10 @@ class YellowImagefilter
         $output = null;
         $callback = function ($matches) {
 
-            // Default Filter aufbereiten
-            // $defaultFilter = $this->yellow->system->get("defaultImfi");
             $defaultFilter = strtolower($this->yellow->system->get("imageFilterDefaultImfi"));
             $defaultFilter = explode('-', $defaultFilter);
             $defaultFilter = preg_replace('/\s+/', '', $defaultFilter[1]);
 
-            // img-Tag in Teile zerlegt, um daraus den Tag nachher neu aufzubauen.
             // Split »img-tag« and create the new one 
             preg_match('/<img src="(.*?)"/i', $matches[0], $srcMatches);
             preg_match('/width="(.*?)"/i', $matches[0], $widthMatches);
@@ -35,8 +35,6 @@ class YellowImagefilter
             preg_match('/class="(.*?)"/i', $matches[0], $classMatches);
             preg_match('/imfi-(.*?)\W/', $matches[0], $choosedFilter); 
             
-            // Problem wenn Array nicht vorhanden.
-            // Mache aus leerem Array eine leere Variable
             if(empty($widthMatches)){
                 $widthMatches = "";
             }else{
@@ -61,41 +59,42 @@ class YellowImagefilter
                 $classMatches = $classMatches[1];
             }
 
-            // Wenn Array leer ist, setze leeren String.
-            // Ändere Filternamen zu Kleinbuchstaben.
-            // Leerzeichen löschen.
             if (!empty($choosedFilter)){
                 $choosedFilter = strtolower($choosedFilter[1]);
                 $choosedFilter = preg_replace('/\s+/', '', $choosedFilter);
             } 
             
-            if (empty($choosedFilter)) {
-                $choosedFilter = $defaultFilter;
-            }
-
-            if ($choosedFilter == "original"){
-                $choosedFilter = "";
-            }
-
             // Original Link and Filename
-            $srcOriginal = $srcMatches[1]; // Link auf Original Source mit Dateinamen und Endung ermittelt
-            $srcOriginalParts = explode('/', $srcMatches[1]); // Original Source Pfad wird aufgeteilt 
-            $filenameOriginal = end($srcOriginalParts); // Original Dateiname mit Endung ermittelt
-            $filnameOriginalParts = explode('.', $filenameOriginal); // Original Dateiname wird in Name und Endung aufgeteilt
-            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal; // Interne Link zum Original Source (ohne »coreServerBase«) wird erstellt
-            $type = $filnameOriginalParts[1]; // Dateiendung wier ermittelt
+            $srcOriginal = $srcMatches[1]; 
+            $srcOriginalParts = explode('/', $srcMatches[1]); 
+            $filenameOriginal = end($srcOriginalParts); 
+            $filnameOriginalParts = explode('.', $filenameOriginal); 
+            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal; 
+            $type = $filnameOriginalParts[1]; 
+
+            if (empty($choosedFilter)) { 
+                $choosedFilter = $defaultFilter;
+                if ($defaultFilter == "original" && $this->yellow->system->get("imageFilterUseWebp") == "1"){
+                    $choosedFilter = "webp";
+                } 
+            }
+
+            if ($choosedFilter == "original" || $type == "gif"){ 
+                   $choosedFilter = "";
+            }
 
             // New Link and Filename
-            $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $type; // Neuer Dateiname mit Endung wird erstellt
-            $pathNew = $this->yellow->system->get('coreServerBase') . '/' . $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; // Link zum Filter-Ordner ohne Dateinamen
-            $srcNew = $pathNew . $filenameNew; // Neuer Link mit Dateinamen und Endung
-            $pathNewInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; // Neuer Interner Pfad
-            $srcNewInside = $pathNewInside . $filenameNew; // Neuer Interner Link zur Source mit Dateinamen und Endung erstellen
+            if ($this->yellow->system->get("imageFilterUseWebp") == "1" && $type != "gif"){ 
+                $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.webp'; 
+            }else{
+                $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $type; 
+            }
+   
+            $pathNew = $this->yellow->system->get('coreServerBase') . '/' . $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; 
+            $srcNew = $pathNew . $filenameNew; 
+            $pathNewInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; 
+            $srcNewInside = $pathNewInside . $filenameNew; 
 
-            // Wenn ein Filter angegeben wurde, wird in dieser Datei und in »ImageFilterCollection« kontrolliert, ob die Funktion vorhanden ist.  
-            // Wenn noch kein Ordner existiert, dann wird eine neuer Ordner und das neue Bild angelegt.
-            // Wenn nicht, bleibt alles beim alten. 
-        
             // Generate Output
             if (!empty($choosedFilter)) {
                 $filterAvailableInternal = null;
@@ -106,7 +105,7 @@ class YellowImagefilter
                 }
 
                 if ($this->yellow->extension->isExisting("imagefiltercollection")) {
-                    if (method_exists($this->yellow->extension->get("imagefiltercollection"),$choosedFilter)) {
+                    if (method_exists($this->yellow->extension->get("imagefiltercollection"), $choosedFilter)) {
                         $filterAvailableExternal = true;
                     }
                 }
@@ -146,7 +145,6 @@ class YellowImagefilter
             return $output;
             
         };
-        // Es wird nach »"/<img src=\"(.*?)\"/i"« in »$text« gesucht und durch »$output« ($callback) ersetzt!
         $output = preg_replace_callback('/<img(.*?)>/i', $callback, $text);  
         return $output;
     }
@@ -154,20 +152,28 @@ class YellowImagefilter
     // Generate the new Image Internal (this file)
     public function generateNewImageInternal($choosedFilter, $srcOriginal, $srcNewInside, $type)
     {
-        if (!file_exists($srcNewInside)) {
+        if (!file_exists($srcNewInside) && $type != "gif") {
             $image = $this->loadImage($srcOriginal, $type);
-            call_user_func(array($this, $choosedFilter), $image);;
-            $this->saveImage($image, $srcNewInside, $type);
+            call_user_func(array($this, $choosedFilter), $image);
+            if ($this->yellow->system->get("imageFilterUseWebp") == "1"){ 
+                $this->saveImage($image, $srcNewInside, 'webp');
+            } else {
+                $this->saveImage($image, $srcNewInside, $type);
+            }
         }
     }
 
     // Generate the new Image Externel (ImageFilterCollection extension)
     public function generateNewImageExternal($choosedFilter, $srcOriginal, $srcNewInside, $type)
     {
-        if (!file_exists($srcNewInside)) {
+        if (!file_exists($srcNewInside) && $type != "gif") {
             $image = $this->loadImage($srcOriginal, $type);
             call_user_func(array($this->yellow->extension->get("imagefiltercollection"), $choosedFilter), $image);
-            $this->saveImage($image, $srcNewInside, $type);
+            if ($this->yellow->system->get("imageFilterUseWebp") == "1"){ 
+                $this->saveImage($image, $srcNewInside, 'webp');
+            } else {
+                $this->saveImage($image, $srcNewInside, $type);
+            }
         }
     }
 
@@ -175,7 +181,7 @@ class YellowImagefilter
     public function loadImage($fileName, $type) {
         $image = false;
         switch ($type) {
-            case "gif": $image = @imagecreatefromgif($fileName); break;
+            case "webp": $image = @imagecreatefromwebp($fileName); break; 
             case "jpeg": $image = @imagecreatefromjpeg($fileName); break;
             case "jpg": $image = @imagecreatefromjpeg($fileName); break;
             case "png": $image = @imagecreatefrompng($fileName); 
@@ -192,24 +198,30 @@ class YellowImagefilter
     public function saveImage($image, $fileName, $type) {
         $ok = false;
         switch ($type) {
-            case "gif": $ok = @imagegif($image, $fileName); break;
-            case "jpeg": $ok = @imagejpeg($image, $fileName); break;
-            case "jpg": $ok = @imagejpeg($image, $fileName); break;
+            case "webp": $ok = @imagewebp($image, $fileName, $this->yellow->system->get("imageFilterImageWebpQuality")); break; 
+            case "jpeg": $ok = @imagejpeg($image, $fileName, $this->yellow->system->get("imageFilterImageJpegQuality")); break; 
+            case "jpg": $ok = @imagejpeg($image, $fileName, $this->yellow->system->get("imageFilterImageJpegQuality")); break; 
             case "png": $ok = @imagepng($image, $fileName); break;
         }
         return $ok;
+    }
+
+    // Do nothing. Only a helper in 
+    // »webp« Workflow
+    public function webp($image){
+        return $image;
+    }
+
+     // Contrast
+     public function contrast($image){
+        imagefilter($image, IMG_FILTER_CONTRAST, -20);
+        return $image;
     }
 
     // Sharpen
     public function sharpen($image){
         $sharpen = array([0, -2, 0], [-2, 11, -2], [0, -2, 0]);
         imageconvolution($image, $sharpen, 3, 0);
-        return $image;
-    }
-
-    // Contrast
-    public function contrast($image){
-        imagefilter($image, IMG_FILTER_CONTRAST, -20);
         return $image;
     }
 }
