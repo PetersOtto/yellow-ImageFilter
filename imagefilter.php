@@ -242,9 +242,9 @@ class YellowImagefilter
     }
 
     public function sharpen($image){
-        $cornerPixel = -1;
-        $middlePixel = -2;
-        $centerPixel = 20;
+        $cornerPixel = -1.5;
+        $middlePixel = -3;
+        $centerPixel = 25;
         $offset = 0;
         $this->sharpenCalculation($image, $cornerPixel, $middlePixel, $centerPixel, $offset);
         return $image;
