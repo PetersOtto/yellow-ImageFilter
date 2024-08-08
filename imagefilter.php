@@ -4,13 +4,14 @@
 
 class YellowImagefilter
 {
-    const VERSION = '0.9.5';
+    const VERSION = '0.9.6';
 
     public $yellow;  // access to API
 
     // Handle initialisation
     public function onLoad($yellow){
         $this->yellow = $yellow;
+        $this->yellow->system->setDefault("imageFilterDevMode", "0"); 
         $this->yellow->system->setDefault("imageFilterUseTitleTag", "0");
         $this->yellow->system->setDefault("imageFilterUseWebp", "1"); 
         $this->yellow->system->setDefault("imageFilterImageWebpQuality", "60"); 
@@ -74,7 +75,7 @@ class YellowImagefilter
 
             if (empty($choosedFilter)) { 
                 $choosedFilter = $defaultFilter;
-                if ($defaultFilter == "original" && $this->yellow->system->get("imageFilterUseWebp") == "1"){
+                if ($defaultFilter == "original" && $this->yellow->system->get("imageFilterUseWebp") == 1){
                     $choosedFilter = "webp";
                 } 
             }
@@ -84,7 +85,7 @@ class YellowImagefilter
             }
 
             // New Link and Filename
-            if ($this->yellow->system->get("imageFilterUseWebp") == "1" && $type != "gif"){ 
+            if ($this->yellow->system->get("imageFilterUseWebp") == 1 && $type != "gif"){ 
                 $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.webp'; 
             }else{
                 $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $type; 
@@ -135,7 +136,7 @@ class YellowImagefilter
             $output .= " width=\"$widthMatches\"";
             $output .= " height=\"$heightMatches\"";
             $output .= " alt=\"$altMatches\"";
-            if ($this->yellow->system->get("imageFilterUseTitleTag") == "1"){
+            if ($this->yellow->system->get("imageFilterUseTitleTag") == 1){
                 $output .= " title=\"$altMatches\"";
             }
             if ($classMatches != ""){
@@ -152,10 +153,16 @@ class YellowImagefilter
     // Generate the new Image Internal (this file)
     public function generateNewImageInternal($choosedFilter, $srcOriginal, $srcNewInside, $type)
     {
-        if (!file_exists($srcNewInside) && $type != "gif") {
+        if ($this->yellow->system->get("imageFilterDevMode") == 1) {
+            $gernerateNewImage = false;
+        } else {
+            $gernerateNewImage = file_exists($srcNewInside);
+        }
+
+        if (!$gernerateNewImage && $type != "gif") {
             $image = $this->loadImage($srcOriginal, $type);
             call_user_func(array($this, $choosedFilter), $image);
-            if ($this->yellow->system->get("imageFilterUseWebp") == "1"){ 
+            if ($this->yellow->system->get("imageFilterUseWebp") == 1){ 
                 $this->saveImage($image, $srcNewInside, 'webp');
             } else {
                 $this->saveImage($image, $srcNewInside, $type);
@@ -166,10 +173,16 @@ class YellowImagefilter
     // Generate the new Image Externel (ImageFilterCollection extension)
     public function generateNewImageExternal($choosedFilter, $srcOriginal, $srcNewInside, $type)
     {
-        if (!file_exists($srcNewInside) && $type != "gif") {
+        if ($this->yellow->system->get("imageFilterDevMode") == 1) {
+            $gernerateNewImage = false;
+        } else {
+            $gernerateNewImage = file_exists($srcNewInside);
+        }
+
+        if (!$gernerateNewImage && $type != "gif") {
             $image = $this->loadImage($srcOriginal, $type);
             call_user_func(array($this->yellow->extension->get("imagefiltercollection"), $choosedFilter), $image);
-            if ($this->yellow->system->get("imageFilterUseWebp") == "1"){ 
+            if ($this->yellow->system->get("imageFilterUseWebp") == 1){ 
                 $this->saveImage($image, $srcNewInside, 'webp');
             } else {
                 $this->saveImage($image, $srcNewInside, $type);
@@ -212,16 +225,35 @@ class YellowImagefilter
         return $image;
     }
 
-     // Contrast
-     public function contrast($image){
+    // Contrast
+    public function contrast($image){
         imagefilter($image, IMG_FILTER_CONTRAST, -20);
         return $image;
     }
 
     // Sharpen
+    public function lowsharpen($image){
+        $cornerPixel = -1;
+        $middlePixel = -1.2;
+        $centerPixel = 11;
+        $offset = 0;
+        $this->sharpenCalculation($image, $cornerPixel, $middlePixel, $centerPixel, $offset);
+        return $image;
+    }
+
     public function sharpen($image){
-        $sharpen = array([0, -2, 0], [-2, 11, -2], [0, -2, 0]);
-        imageconvolution($image, $sharpen, 3, 0);
+        $cornerPixel = -1;
+        $middlePixel = -2;
+        $centerPixel = 20;
+        $offset = 0;
+        $this->sharpenCalculation($image, $cornerPixel, $middlePixel, $centerPixel, $offset);
+        return $image;
+    }
+
+    public function sharpenCalculation($image,  $cornerPixel, $middlePixel, $centerPixel, $offset){
+        $sharpenMatrix = array([$cornerPixel, $middlePixel, $cornerPixel], [$middlePixel, $centerPixel, $middlePixel], [$cornerPixel, $middlePixel, $cornerPixel]);
+        $divisor = array_sum(array_map('array_sum', $sharpenMatrix));  
+        imageconvolution($image, $sharpenMatrix, $divisor, $offset);
         return $image;
     }
 }
