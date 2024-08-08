@@ -235,7 +235,7 @@ class YellowImagefilter
     public function lowsharpen($image){
         $cornerPixel = -1;
         $middlePixel = -1.2;
-        $centerPixel = 11;
+        $centerPixel = 20;
         $offset = 0;
         $this->sharpenCalculation($image, $cornerPixel, $middlePixel, $centerPixel, $offset);
         return $image;
