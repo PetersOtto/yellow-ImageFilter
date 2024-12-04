@@ -36,14 +36,15 @@ class YellowImagefilter
 
             // Filter
             $defaultFilter = $this->getFilter($this->yellow->system->get('imageFilterDefaultImfi'));
-            $classFilter = $this->getFilter($classFilter[0]);
+            $classFilter = $this->setMatchesToAttribute($classFilter, '0');
+            $classFilter = $this->getFilter($classFilter);
             $choosedFilter = null;
 
             // Set matches to img attribute
-            $widthAttribute = $this->setMatchesToAttribute($widthMatches);
-            $heightAttribute = $this->setMatchesToAttribute($heightMatches);
-            $altAttribute = $this->setMatchesToAttribute($altMatches);
-            $classAttribute = $this->setMatchesToAttribute($classMatches);
+            $widthAttribute = $this->setMatchesToAttribute($widthMatches, '1');
+            $heightAttribute = $this->setMatchesToAttribute($heightMatches, '1');
+            $altAttribute = $this->setMatchesToAttribute($altMatches, '1');
+            $classAttribute = $this->setMatchesToAttribute($classMatches, '1');
 
             // Original link and filename
             $srcOriginal = $srcMatches[1]; 
@@ -75,6 +76,8 @@ class YellowImagefilter
             $isFilterDefaultAvailableExternal = $this->checkIfFilterIsAvailableExternal($defaultFilter);
             $isFilterDefaultAvailableInternal = $this->checkIfFilterIsAvailableInternal($defaultFilter);
             $isFilterDefaultAvailable = $this->checkIfFilterDefaultIsAvailable($defaultFilter);
+
+            $isFilterAvailableInternal = null;
 
             $isFilterAvailable = $this->checkIfFilterIsAvailable($isFilterClassAvailableExternal, $isFilterClassAvailableInternal, $isFilterDefaultAvailable); 
             
@@ -124,9 +127,9 @@ class YellowImagefilter
                     }
                     
                     if ($isFilterClassAvailableInternal === true || $isFilterDefaultAvailableInternal === true || $isFilterAvailableInternal === true) {
-                        $this->generateNewImageInternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed);
+                        $this->generateNewImageInternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed);  // *******************
                     } elseif ($isFilterClassAvailableExternal === true || $isFilterDefaultAvailableExternal === true) {
-                        $this->generateNewImageExternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed);
+                        $this->generateNewImageExternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed); // *******************
                     }   
 
                     $output = '<img src="' . $srcNew . '"';
@@ -199,7 +202,7 @@ class YellowImagefilter
     // Check if the extension »imageFilter« exist and if the filter is available in »imagefilter.php«
     public function checkIfFilterIsAvailableInternal($toCheckFilter)
     {
-        $isFilterClassAvailableInternal = method_exists($this, $toCheckFilter);
+        $isFilterAvailableInternal = method_exists($this, $toCheckFilter);
 
         if ($isFilterAvailableInternal !== true) { // ===
             $isFilterAvailableInternal = false;
@@ -230,7 +233,7 @@ class YellowImagefilter
         if (!$gernerateNewImage && $isTypeAllowed === true) {
             $image = $this->loadImage($srcOriginal, $originalType);
             call_user_func(array($this, $choosedFilter), $image);
-            if ($useWebp == 1){ 
+            if ($this->yellow->system->get('imageFilterUseWebp') == 1){ 
                 $this->saveImage($image, $srcNewInside, 'webp');
             } else {
                 $this->saveImage($image, $srcNewInside, $originalType);
@@ -250,7 +253,7 @@ class YellowImagefilter
         if (!$gernerateNewImage && $isTypeAllowed === true) {
             $image = $this->loadImage($srcOriginal, $originalType);
             call_user_func(array($this->yellow->extension->get('imagefiltercollection'), $choosedFilter), $image);
-            if ($useWebp == 1){ 
+            if ($this->yellow->system->get('imageFilterUseWebp') == 1){ 
                 $this->saveImage($image, $srcNewInside, 'webp');
             } else {
                 $this->saveImage($image, $srcNewInside, $originalType);
@@ -299,16 +302,15 @@ class YellowImagefilter
     }
 
     // Put the »preg_match« image matches into the attribut variables for the new image tag
-    public function setMatchesToAttribute($matches)
+    public function setMatchesToAttribute($matches, $key)
     {
         if(empty($matches)){
             $attribute = '';
         }else{
-            $attribute = $matches[1];
+            $attribute = $matches[$key];
         }
         return $attribute;
     }
-
 
     // Check if image type is allowed
     public function checkIfTypeIsAllowed($toCheckType)
