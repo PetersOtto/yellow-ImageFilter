@@ -36,15 +36,15 @@ class YellowImagefilter
 
             // Filter
             $defaultFilter = $this->getFilter($this->yellow->system->get('imageFilterDefaultImfi'));
-            $classFilter = $this->setMatchesToAttribute($classFilter, '0');
+            $classFilter = $this->setMatchesToAttribute($classFilter, 1);
             $classFilter = $this->getFilter($classFilter);
             $choosedFilter = null;
 
             // Set matches to img attribute
-            $widthAttribute = $this->setMatchesToAttribute($widthMatches, '1');
-            $heightAttribute = $this->setMatchesToAttribute($heightMatches, '1');
-            $altAttribute = $this->setMatchesToAttribute($altMatches, '1');
-            $classAttribute = $this->setMatchesToAttribute($classMatches, '1');
+            $widthAttribute = $this->setMatchesToAttribute($widthMatches, 1);
+            $heightAttribute = $this->setMatchesToAttribute($heightMatches, 1);
+            $altAttribute = $this->setMatchesToAttribute($altMatches, 1);
+            $classAttribute = $this->setMatchesToAttribute($classMatches, 1);
 
             // Original link and filename
             $srcOriginal = $srcMatches[1]; 
@@ -297,7 +297,10 @@ class YellowImagefilter
             $toCheckImageFilter = strtolower($toCheckImageFilter);
             $toCheckImageFilter = explode('-', $toCheckImageFilter);
             $toCheckImageFilter = preg_replace('/\s+/', '', $toCheckImageFilter[1]);
-        } 
+        } else {
+            $toCheckImageFilter = strtolower($toCheckImageFilter);
+            $toCheckImageFilter = trim($toCheckImageFilter);
+        }
         return $toCheckImageFilter;
     }
 
