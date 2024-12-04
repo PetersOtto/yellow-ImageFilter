@@ -1,6 +1,8 @@
 <?php
-// ImageFilter is an Datenstrom Yellow extension for applying image filters.
-// For more image filters, install the Yellow ImageFilterCollection extension.
+// »ImageFilter« is a Datenstrom Yellow extension, for applying image filters and »webp« conversation.
+// For more or own image filters, install and perhaps modify the Yellow »ImageFilterCollection« extension.
+// If you need images on your »blog-start.html«, have a look to the Yellow »CatchImage« extension.
+
 
 class YellowImagefilter
 {
@@ -65,7 +67,6 @@ class YellowImagefilter
                 $defaultFilter = '';
             }
 
-
             // Check if filter are available
             $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($classFilter); 
             $isFilterClassAvailableInternal = $this->checkIfFilterIsAvailableInternal($classFilter);
@@ -77,12 +78,12 @@ class YellowImagefilter
 
             $isFilterAvailable = $this->checkIfFilterIsAvailable($isFilterClassAvailableExternal, $isFilterClassAvailableInternal, $isFilterDefaultAvailable); 
             
-            // Find out what filter is the right
+            // Find out what filter is the right filter
             if ($isFilterClassAvailable === true){
                 $choosedFilter = $classFilter;
             }
                         
-            if ($isFilterClassAvailable === false && $isFilterDefaultAvailable === true){ // ===
+            if ($isFilterClassAvailable === false && $isFilterDefaultAvailable === true){ 
                 $choosedFilter = $defaultFilter;
             }
 
@@ -94,8 +95,8 @@ class YellowImagefilter
                 $choosedFilter = '';
             }
 
-            // Use webp if selected in »system.ini«
-            if (empty($choosedFilter) && $useWebp == 1 && $isClassFilterOriginal !== true){ // ===
+            // Use »webp« if selected in »system.ini«
+            if (empty($choosedFilter) && $useWebp == 1 && $isClassFilterOriginal !== true){ 
                 $choosedFilter = 'webp';
                 $isFilterAvailable = true;
                 $isFilterAvailableInternal = true;
@@ -115,7 +116,6 @@ class YellowImagefilter
 
             // Generate output
             if (!empty($choosedFilter)) {
-
 
                 if ($isFilterAvailable === true && $isTypeAllowed === true) {
 
@@ -168,7 +168,7 @@ class YellowImagefilter
         return $isFilterAvailable;
     }
 
-    // Check if filter is available in »imagefilter.php 
+    // Check if default filter is available 
     public function checkIfFilterDefaultIsAvailable($toCheckFilter)
     {
         $isFilterDefaultAvailableExternal = $this->checkIfFilterIsAvailableExternal($toCheckFilter); 
@@ -182,7 +182,7 @@ class YellowImagefilter
         return $isFilterAvailable;
     }
 
-    // Check if filter is available in »imagefilter.php 
+    // Check if »classFilter« is available 
     public function checkIfFilterClassIsAvailable($toCheckFilter)
     {
         $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($toCheckFilter); 
@@ -196,26 +196,26 @@ class YellowImagefilter
         return $isFilterAvailable;
     }
 
-    // Check if the extension »imageFillter« exist and if filter is available in »imagefilter.php«
+    // Check if the extension »imageFilter« exist and if the filter is available in »imagefilter.php«
     public function checkIfFilterIsAvailableInternal($toCheckFilter)
     {
         $isFilterClassAvailableInternal = method_exists($this, $toCheckFilter);
 
-        if ($isFilterClassAvailableInternal !== true) { // ===
-            $isFilterClassAvailableInternal = false;
+        if ($isFilterAvailableInternal !== true) { // ===
+            $isFilterAvailableInternal = false;
         } 
-        return $isFilterClassAvailableInternal;
+        return $isFilterAvailableInternal;
     }
     
-    // Check if the extension »imageFillterCollection« exist and if filter is available in »imagefiltercollection.php«
+    // Check if the extension »imageFillterCollection« exist and if the filter is available in »imagefiltercollection.php«
     public function checkIfFilterIsAvailableExternal($toCheckFilter)
     {
         if ($this->yellow->extension->isExisting('imagefiltercollection')) {
-            $isFilterClassAvailableExternal = method_exists($this->yellow->extension->get('imagefiltercollection'), $toCheckFilter);
+            $isFilterAvailableExternal = method_exists($this->yellow->extension->get('imagefiltercollection'), $toCheckFilter);
         } else {
-            $isFilterClassAvailableExternal = false;
+            $isFilterAvailableExternal = false;
         }
-        return $isFilterClassAvailableExternal;
+        return $isFilterAvailableExternal;
     }
 
     // Generate the new image internal (this file)
@@ -323,8 +323,7 @@ class YellowImagefilter
         return $checkTypeResult;
     }
 
-    // Do nothing. Only a helper in 
-    // »webp« Workflow
+    // Do nothing. Only a helper in »webp« Workflow
     public function webp($image){
         return $image;
     }
