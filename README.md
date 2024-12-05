@@ -7,7 +7,7 @@ In addition, you can select in the »yellow-system.ini« whether the new images 
 
 ## Before using »ImageFilter«
 
-»ImageFilter« must compress the new images, otherwise the image file will be too large. However, Datenstrom Yellow already compresses the images when they are uploaded to your web server. However, the value of the compression can be set in the »yellow-system.ini«. I recommend to set “ImageUploadJpegQuality” from “80” to “95” when using “ImageFilter”.
+»ImageFilter« must compress the new images, otherwise the image file will be too large. However, Datenstrom Yellow already compresses the images when they are uploaded to your web server. However, the value of the compression can be set in the »yellow-system.ini«. I recommend to set »ImageUploadJpegQuality« from »80« to »95« when using “ImageFilter”.
 
 ## How to use
 
