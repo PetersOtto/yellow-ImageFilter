@@ -204,7 +204,7 @@ class YellowImagefilter
     {
         $isFilterAvailableInternal = method_exists($this, $toCheckFilter);
 
-        if ($isFilterAvailableInternal !== true) { // ===
+        if ($isFilterAvailableInternal !== true) {
             $isFilterAvailableInternal = false;
         } 
         return $isFilterAvailableInternal;
