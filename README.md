@@ -1,5 +1,4 @@
 # yellow-imageFilter
-## ImageFilter
 
 With »ImageFilter« it is possible to apply image filters to the images on the website. The original image will not be change. New images are created and stored in subfolders. A default filter can be specified in the »yellow-system.ini«
 
