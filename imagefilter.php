@@ -11,18 +11,20 @@ class YellowImagefilter
     public $yellow;  // access to API
 
     // Handle initialisation
-    public function onLoad($yellow){
+    public function onLoad($yellow)
+    {
         $this->yellow = $yellow;
-        $this->yellow->system->setDefault('imageFilterDevMode', '0'); 
+        $this->yellow->system->setDefault('imageFilterDevMode', '0');
         $this->yellow->system->setDefault('imageFilterUseTitleTag', '0');
-        $this->yellow->system->setDefault('imageFilterUseWebp', '1'); 
-        $this->yellow->system->setDefault('imageFilterImageWebpQuality', '60'); 
-        $this->yellow->system->setDefault('imageFilterImageJpegQuality', '80'); 
+        $this->yellow->system->setDefault('imageFilterUseWebp', '1');
+        $this->yellow->system->setDefault('imageFilterImageWebpQuality', '60');
+        $this->yellow->system->setDefault('imageFilterImageJpegQuality', '80');
         $this->yellow->system->setDefault('imageFilterDefaultImfi', 'imfi-original');
     }
 
     // Start with main method
-    public function onParseContentHtml($page, $text){
+    public function onParseContentHtml($page, $text)
+    {
         $output = null;
         $callback = function ($matches) {
 
@@ -32,7 +34,7 @@ class YellowImagefilter
             preg_match('/height="(.*?)"/i', $matches[0], $heightMatches);
             preg_match('/alt="(.*?)"/i', $matches[0], $altMatches);
             preg_match('/class="(.*?)"/i', $matches[0], $classMatches);
-            preg_match('/imfi-(.*?)\W/', $matches[0], $classFilter); 
+            preg_match('/imfi-(.*?)\W/', $matches[0], $classFilter);
 
             // Filter
             $defaultFilter = $this->getFilter($this->yellow->system->get('imageFilterDefaultImfi'));
@@ -47,29 +49,33 @@ class YellowImagefilter
             $classAttribute = $this->setMatchesToAttribute($classMatches, 1);
 
             // Original link and filename
-            $srcOriginal = $srcMatches[1]; 
-            $srcOriginalParts = explode('/', $srcMatches[1]); 
-            $filenameOriginal = end($srcOriginalParts); 
-            $filnameOriginalParts = explode('.', $filenameOriginal); 
-            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal; 
-            $originalType = strtolower($filnameOriginalParts[1]); 
+            $srcOriginal = $srcMatches[1];
+            $srcOriginalParts = explode('/', $srcMatches[1]);
+            $filenameOriginal = end($srcOriginalParts);
+            $filnameOriginalParts = explode('.', $filenameOriginal);
+            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal;
+            $originalType = strtolower($filnameOriginalParts[1]);
             $isTypeAllowed = $this->checkIfTypeIsAllowed($originalType);
             $useWebp = $this->yellow->system->get('imageFilterUseWebp');
             $isClassFilterOriginal = null;
 
-            if ($classFilter === 'original'){
+            if ($classFilter === 'original') {
                 $isClassFilterOriginal = true;
             }
 
-            if ($classFilter === 'webp' || $classFilter === 'original' || empty($classFilter)){
+            if ($classFilter === 'webp' || $classFilter === 'original' || empty($classFilter)) {
                 $classFilter = '';
             }
-            if ($defaultFilter === 'webp' || $defaultFilter === 'original' || empty($defaultFilter)){
+            if ($defaultFilter === 'webp' || $defaultFilter === 'original' || empty($defaultFilter)) {
                 $defaultFilter = '';
             }
 
+            // Check if original file are available
+            $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal;
+            $isOriginalFileAvailable = file_exists($srcOriginalInside);
+
             // Check if filter are available
-            $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($classFilter); 
+            $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($classFilter);
             $isFilterClassAvailableInternal = $this->checkIfFilterIsAvailableInternal($classFilter);
             $isFilterClassAvailable = $this->checkIfFilterDefaultIsAvailable($classFilter);
 
@@ -79,91 +85,96 @@ class YellowImagefilter
 
             $isFilterAvailableInternal = null;
 
-            $isFilterAvailable = $this->checkIfFilterIsAvailable($isFilterClassAvailableExternal, $isFilterClassAvailableInternal, $isFilterDefaultAvailable); 
-            
+            $isFilterAvailable = $this->checkIfFilterIsAvailable($isFilterClassAvailableExternal, $isFilterClassAvailableInternal, $isFilterDefaultAvailable);
+
             // Find out what filter is the right filter
-            if ($isFilterClassAvailable === true){
+            if ($isFilterClassAvailable === true) {
                 $choosedFilter = $classFilter;
             }
-                        
-            if ($isFilterClassAvailable === false && $isFilterDefaultAvailable === true){ 
+
+            if ($isFilterClassAvailable === false && $isFilterDefaultAvailable === true) {
                 $choosedFilter = $defaultFilter;
             }
 
-            if ($isFilterAvailable === false){
+            if ($isFilterAvailable === false) {
                 $choosedFilter = '';
             }
 
-            if ($isClassFilterOriginal === true){
+            if ($isClassFilterOriginal === true) {
                 $choosedFilter = '';
             }
 
             // Use »webp« if selected in »system.ini«
-            if (empty($choosedFilter) && $useWebp == 1 && $isClassFilterOriginal !== true){ 
+            if (empty($choosedFilter) && $useWebp == 1 && $isClassFilterOriginal !== true) {
                 $choosedFilter = 'webp';
                 $isFilterAvailable = true;
                 $isFilterAvailableInternal = true;
             }
 
             // New link and filename
-            if ($useWebp == 1 && $isTypeAllowed === true){ 
-                $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.webp'; 
-            }else{
-                $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $originalType; 
+            if ($useWebp == 1 && $isTypeAllowed === true) {
+                $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.webp';
+            } else {
+                $filenameNew = $filnameOriginalParts[0] . '-' . $choosedFilter . '.' . $originalType;
             }
 
-            $pathNew = $this->yellow->system->get('coreServerBase') . '/' . $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; 
-            $srcNew = $pathNew . $filenameNew; 
-            $pathNewInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/'; 
-            $srcNewInside = $pathNewInside . $filenameNew; 
+            $pathNew = $this->yellow->system->get('coreServerBase') . '/' . $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/';
+            $srcNew = $pathNew . $filenameNew;
+            $pathNewInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $choosedFilter . '/';
+            $srcNewInside = $pathNewInside . $filenameNew;
 
             // Generate output
-            if (!empty($choosedFilter)) {
 
-                if ($isFilterAvailable === true && $isTypeAllowed === true) {
+            if ($isOriginalFileAvailable === true) {
+                if (!empty($choosedFilter)) {
 
-                    if (!is_dir($pathNewInside)) {
-                        mkdir($pathNewInside);
+                    if ($isFilterAvailable === true && $isTypeAllowed === true) {
+
+                        if (!is_dir($pathNewInside)) {
+                            mkdir($pathNewInside);
+                        }
+
+                        if ($isFilterClassAvailableInternal === true || $isFilterDefaultAvailableInternal === true || $isFilterAvailableInternal === true) {
+                            $this->generateNewImageInternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed);  // *******************
+                        } elseif ($isFilterClassAvailableExternal === true || $isFilterDefaultAvailableExternal === true) {
+                            $this->generateNewImageExternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed); // *******************
+                        }
+
+                        $output = '<img src="' . $srcNew . '"';
+
+                    } else {
+                        $output = '<img src="' . $srcOriginal . '"';
                     }
-                    
-                    if ($isFilterClassAvailableInternal === true || $isFilterDefaultAvailableInternal === true || $isFilterAvailableInternal === true) {
-                        $this->generateNewImageInternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed);  // *******************
-                    } elseif ($isFilterClassAvailableExternal === true || $isFilterDefaultAvailableExternal === true) {
-                        $this->generateNewImageExternal($choosedFilter, $srcOriginalInside, $srcNewInside, $originalType, $isTypeAllowed); // *******************
-                    }   
-
-                    $output = '<img src="' . $srcNew . '"';
 
                 } else {
                     $output = '<img src="' . $srcOriginal . '"';
                 }
-
+                if ($originalType != 'svg' && $isTypeAllowed === true) {
+                    $output .= ' width="' . $widthAttribute . '"';
+                    $output .= ' height="' . $heightAttribute . '"';
+                }
+                $output .= ' alt="' . $altAttribute . '"';
+                if ($this->yellow->system->get("imageFilterUseTitleTag") == 1) {
+                    $output .= ' title="' . $altAttribute . '"';
+                }
+                if ($classAttribute != "") {
+                    $output .= ' class="' . $classAttribute . '"';
+                }
+                $output .= '>';
             } else {
-                $output = '<img src="' . $srcOriginal . '"';
+                $output = '<div><h1>Attention: Image file »' . $filenameOriginal . '« is not available.</h1></div>';
             }
-            if ($originalType != 'svg' && $isTypeAllowed === true){
-                $output .= ' width="' . $widthAttribute . '"';
-                $output .= ' height="' . $heightAttribute . '"';
-            }
-            $output .= ' alt="' . $altAttribute . '"';
-            if ($this->yellow->system->get("imageFilterUseTitleTag") == 1){
-                $output .= ' title="' . $altAttribute . '"';
-            }
-            if ($classAttribute != ""){
-                $output .= ' class="' . $classAttribute . '"';
-            }
-            $output .= '>';
             return $output;
-            
+
         };
-        $output = preg_replace_callback('/<img(.*?)>/i', $callback, $text);  
+        $output = preg_replace_callback('/<img(.*?)>/i', $callback, $text);
         return $output;
     }
 
     // Check if filter is available 
     public function checkIfFilterIsAvailable($isFilterClassAvailableExternal, $isFilterClassAvailableInternal, $isFilterDefaultAvailable)
     {
-        if ($isFilterClassAvailableExternal || $isFilterClassAvailableInternal || $isFilterDefaultAvailable){
+        if ($isFilterClassAvailableExternal || $isFilterClassAvailableInternal || $isFilterDefaultAvailable) {
             $isFilterAvailable = true;
         } else {
             $isFilterAvailable = false;
@@ -174,7 +185,7 @@ class YellowImagefilter
     // Check if default filter is available 
     public function checkIfFilterDefaultIsAvailable($toCheckFilter)
     {
-        $isFilterDefaultAvailableExternal = $this->checkIfFilterIsAvailableExternal($toCheckFilter); 
+        $isFilterDefaultAvailableExternal = $this->checkIfFilterIsAvailableExternal($toCheckFilter);
         $isFilterDefaultAvailableInternal = $this->checkIfFilterIsAvailableInternal($toCheckFilter);
 
         if (($isFilterDefaultAvailableExternal || $isFilterDefaultAvailableInternal)) {
@@ -188,7 +199,7 @@ class YellowImagefilter
     // Check if »classFilter« is available 
     public function checkIfFilterClassIsAvailable($toCheckFilter)
     {
-        $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($toCheckFilter); 
+        $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($toCheckFilter);
         $isFilterClassAvailableInternal = $this->checkIfFilterIsAvailableInternal($toCheckFilter);
 
         if (($isFilterClassAvailableExternal || $isFilterClassAvailableInternal)) {
@@ -206,10 +217,10 @@ class YellowImagefilter
 
         if ($isFilterAvailableInternal !== true) {
             $isFilterAvailableInternal = false;
-        } 
+        }
         return $isFilterAvailableInternal;
     }
-    
+
     // Check if the extension »imageFillterCollection« exist and if the filter is available in »imagefiltercollection.php«
     public function checkIfFilterIsAvailableExternal($toCheckFilter)
     {
@@ -233,7 +244,7 @@ class YellowImagefilter
         if (!$gernerateNewImage && $isTypeAllowed === true) {
             $image = $this->loadImage($srcOriginal, $originalType);
             call_user_func(array($this, $choosedFilter), $image);
-            if ($this->yellow->system->get('imageFilterUseWebp') == 1){ 
+            if ($this->yellow->system->get('imageFilterUseWebp') == 1) {
                 $this->saveImage($image, $srcNewInside, 'webp');
             } else {
                 $this->saveImage($image, $srcNewInside, $originalType);
@@ -253,7 +264,7 @@ class YellowImagefilter
         if (!$gernerateNewImage && $isTypeAllowed === true) {
             $image = $this->loadImage($srcOriginal, $originalType);
             call_user_func(array($this->yellow->extension->get('imagefiltercollection'), $choosedFilter), $image);
-            if ($this->yellow->system->get('imageFilterUseWebp') == 1){ 
+            if ($this->yellow->system->get('imageFilterUseWebp') == 1) {
                 $this->saveImage($image, $srcNewInside, 'webp');
             } else {
                 $this->saveImage($image, $srcNewInside, $originalType);
@@ -262,30 +273,47 @@ class YellowImagefilter
     }
 
     // Load image from file
-    public function loadImage($fileName, $originalType) {
+    public function loadImage($fileName, $originalType)
+    {
         $image = false;
         switch ($originalType) {
-            case 'webp': $image = @imagecreatefromwebp($fileName); break; 
-            case 'jpeg': $image = @imagecreatefromjpeg($fileName); break;
-            case 'jpg': $image = @imagecreatefromjpeg($fileName); break;
-            case 'png': $image = @imagecreatefrompng($fileName); 
-                        $background = imagecolorallocate($image , 0, 0, 0);
-                        imagecolortransparent($image, $background);
-                        imagealphablending($image, false);
-                        imagesavealpha($image, true);
-                        break;
+            case 'webp':
+                $image = @imagecreatefromwebp($fileName);
+                break;
+            case 'jpeg':
+                $image = @imagecreatefromjpeg($fileName);
+                break;
+            case 'jpg':
+                $image = @imagecreatefromjpeg($fileName);
+                break;
+            case 'png':
+                $image = @imagecreatefrompng($fileName);
+                $background = imagecolorallocate($image, 0, 0, 0);
+                imagecolortransparent($image, $background);
+                imagealphablending($image, false);
+                imagesavealpha($image, true);
+                break;
         }
         return $image;
     }
 
     // Save image to file
-    public function saveImage($image, $fileName, $originalType) {
+    public function saveImage($image, $fileName, $originalType)
+    {
         $ok = false;
         switch ($originalType) {
-            case 'webp': $ok = @imagewebp($image, $fileName, $this->yellow->system->get('imageFilterImageWebpQuality')); break; 
-            case 'jpeg': $ok = @imagejpeg($image, $fileName, $this->yellow->system->get('imageFilterImageJpegQuality')); break; 
-            case 'jpg': $ok = @imagejpeg($image, $fileName, $this->yellow->system->get('imageFilterImageJpegQuality')); break; 
-            case 'png': $ok = @imagepng($image, $fileName); break;
+            case 'webp':
+                $ok = @imagewebp($image, $fileName, $this->yellow->system->get('imageFilterImageWebpQuality'));
+                break;
+            case 'jpeg':
+                $ok = @imagejpeg($image, $fileName, $this->yellow->system->get('imageFilterImageJpegQuality'));
+                break;
+            case 'jpg':
+                $ok = @imagejpeg($image, $fileName, $this->yellow->system->get('imageFilterImageJpegQuality'));
+                break;
+            case 'png':
+                $ok = @imagepng($image, $fileName);
+                break;
         }
         return $ok;
     }
@@ -307,9 +335,9 @@ class YellowImagefilter
     // Put the »preg_match« image matches into the attribut variables for the new image tag
     public function setMatchesToAttribute($matches, $key)
     {
-        if(empty($matches)){
+        if (empty($matches)) {
             $attribute = '';
-        }else{
+        } else {
             $attribute = $matches[$key];
         }
         return $attribute;
@@ -320,28 +348,31 @@ class YellowImagefilter
     {
         $allowedImageTypes = 'png, webp, jpeg, jpg';
         $checkTypeResult = strpos($allowedImageTypes, $toCheckType);
-            if ($checkTypeResult !== false){
-                $checkTypeResult = true;
-            } else{
-                $checkTypeResult = false;
-            }
+        if ($checkTypeResult !== false) {
+            $checkTypeResult = true;
+        } else {
+            $checkTypeResult = false;
+        }
         return $checkTypeResult;
     }
 
     // Do nothing. Only a helper in »webp« Workflow
-    public function webp($image){
+    public function webp($image)
+    {
         return $image;
     }
 
     // Contrast filter
-    public function contrast($image){
+    public function contrast($image)
+    {
         imagefilter($image, IMG_FILTER_CONTRAST, -20);
         return $image;
     }
 
     // Sharpen filter
     // Sharpen
-    public function lowsharpen($image){
+    public function lowsharpen($image)
+    {
         $cornerPixel = -1;
         $middlePixel = -1.2;
         $centerPixel = 20;
@@ -351,7 +382,8 @@ class YellowImagefilter
     }
 
     // Low sharpen
-    public function sharpen($image){
+    public function sharpen($image)
+    {
         $cornerPixel = -1.5;
         $middlePixel = -3;
         $centerPixel = 25;
@@ -361,9 +393,10 @@ class YellowImagefilter
     }
 
     // Calculation for sharpen filters
-    public function sharpenCalculation($image,  $cornerPixel, $middlePixel, $centerPixel, $offset){
+    public function sharpenCalculation($image, $cornerPixel, $middlePixel, $centerPixel, $offset)
+    {
         $sharpenMatrix = array([$cornerPixel, $middlePixel, $cornerPixel], [$middlePixel, $centerPixel, $middlePixel], [$cornerPixel, $middlePixel, $cornerPixel]);
-        $divisor = array_sum(array_map('array_sum', $sharpenMatrix));  
+        $divisor = array_sum(array_map('array_sum', $sharpenMatrix));
         imageconvolution($image, $sharpenMatrix, $divisor, $offset);
         return $image;
     }
