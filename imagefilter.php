@@ -6,7 +6,7 @@
 
 class YellowImagefilter
 {
-    const VERSION = '0.9.7';
+    const VERSION = '0.9.8';
 
     public $yellow;  // access to API
 
