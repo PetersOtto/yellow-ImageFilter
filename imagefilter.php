@@ -70,11 +70,11 @@ class YellowImagefilter
                 $defaultFilter = '';
             }
 
-            // Check if original file are available
+            // Check if original file is available
             $srcOriginalInside = $this->yellow->lookup->findMediaDirectory('coreImageLocation') . $filenameOriginal;
             $isOriginalFileAvailable = file_exists($srcOriginalInside);
 
-            // Check if filter are available
+            // Check if filter is available
             $isFilterClassAvailableExternal = $this->checkIfFilterIsAvailableExternal($classFilter);
             $isFilterClassAvailableInternal = $this->checkIfFilterIsAvailableInternal($classFilter);
             $isFilterClassAvailable = $this->checkIfFilterDefaultIsAvailable($classFilter);
@@ -124,7 +124,6 @@ class YellowImagefilter
             $srcNewInside = $pathNewInside . $filenameNew;
 
             // Generate output
-
             if ($isOriginalFileAvailable === true) {
                 if (!empty($choosedFilter)) {
 
